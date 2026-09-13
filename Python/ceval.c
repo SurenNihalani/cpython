@@ -1678,13 +1678,14 @@ suggest_missing_self(PyFunctionObject *func, PyCodeObject *co,
     }
 
     if (first_argument == NULL || PyType_Check(first_argument)) {
-        // When first arg is NULL, it's not really about self
-        // If its a type object, then its a classmethod.
+        /* When first arg is NULL, it's not really about self.
+           If it's a type object, then it's a classmethod. */
         return 0;
     }
 
     if (co->co_argcount > 0) {
-        // don't confuse the user when they've already declared a common convention of cls/self
+        /* Don't confuse the user when they've already declared a
+           common convention of cls/self. */
         PyObject *first_parameter_name = PyTuple_GET_ITEM(co->co_localsplusnames, 0);
         /* If the receiver parameter is already declared, another hint would be misleading. */
         if (PyUnicode_CompareWithASCIIString(first_parameter_name, "self") == 0 ||
@@ -1693,7 +1694,7 @@ suggest_missing_self(PyFunctionObject *func, PyCodeObject *co,
             return 0;
         }
     }
-    // If the current function matches on the type, its likely worth adding the hint
+    /* If the current function matches on the type, it's likely worth adding the hint. */
     PyTypeObject *self_cls = Py_TYPE(first_argument);
     PyFunctionObject *possibly_current_function =
         (PyFunctionObject *)_PyType_Lookup(self_cls, co->co_name);
