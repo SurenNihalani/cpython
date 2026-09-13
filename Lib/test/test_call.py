@@ -947,7 +947,7 @@ class TestPEP590(unittest.TestCase):
         self.assertEqual(kwargs_captured, [{"baz": "bar"}])
 
 class A:
-    def method_two_args(self, volume, pitch):
+    def method_two_args(self, x, y):
         pass
 
     @staticmethod
@@ -955,11 +955,11 @@ class A:
         pass
 
     @staticmethod
-    def static_method_one_arg(times):
+    def positional_only(toy, /):
         pass
 
     @staticmethod
-    def positional_only(toy, /):
+    def static_method_one_arg(times):
         pass
 
     def instance_method_2args(self, sound):
