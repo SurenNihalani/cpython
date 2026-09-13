@@ -1000,17 +1000,11 @@ class TestIncorrectNumberOfPositionalArgs(unittest.TestCase):
             yield
         self.assertIn(message, str(cm.exception))
 
-    def test_too_many_positional_with_self_does_not_suggest_missing_self(self):
-        """A regular method with self should keep the normal too-many-args error."""
+    def test_too_many_positional_with_defaults_suggests_missing_self(self):
+        """A method with defaults that omits self should still get the hint."""
         msg = ".method_two_args() takes from 0 to 2 positional arguments but 3 were given. Did you forget the 'self' parameter in the function definition?"
         with self.assert_type_error_and_msg_equals(msg):
             A().method_two_args("woof", "loud")
-
-    def test_too_many_positional_but_missing_self(self):
-        """A bound instance method missing self should get the targeted hint."""
-        msg = "takes 1 positional argument but 2 were given. Did you forget the 'self' parameter in the function definition?"
-        with self.assert_type_error_and_msg_equals(msg):
-            A().method_one_arg("woof")
 
     def test_too_many_positional_but_missing_self_no_args(self):
         """A zero-argument method called through an instance should get the hint."""
@@ -1018,7 +1012,8 @@ class TestIncorrectNumberOfPositionalArgs(unittest.TestCase):
         with self.assert_type_error_and_msg_equals(msg):
             A().method_zero_arg()
 
-    def test_missing_arguments(self):
+    def test_too_many_positional_but_missing_self(self):
+        """A bound instance method missing self should get the targeted hint."""
         msg = ".method_one_arg() takes 1 positional argument but 2 were given. Did you forget the 'self' parameter in the function definition?"
         with self.assert_type_error_and_msg_equals(msg):
             A().method_one_arg("quiet")
@@ -1042,12 +1037,6 @@ class TestIncorrectNumberOfPositionalArgs(unittest.TestCase):
         msg = ".method_two_args() got multiple values for argument 'arg1'"
         with self.assert_type_error_and_msg_equals(msg):
             A().method_two_args("quiet", "low", arg1="oops")
-
-    def test_self_in_wrong_position_keeps_missing_argument_error(self):
-        """A parameter named self in the wrong position is a missing-arg error."""
-        msg = ".method_zero_arg() takes 0 positional arguments but 1 was given. Did you forget the 'self' parameter in the function definition?"
-        with self.assert_type_error_and_msg_equals(msg):
-            A().method_zero_arg()
 
     def test_unbound_method_with_self_keeps_missing_argument_error(self):
         """Calling an unbound method without self should keep the missing-arg error."""
@@ -1093,9 +1082,9 @@ class TestIncorrectNumberOfPositionalArgs(unittest.TestCase):
 
     def test_metaclass_classmethod_does_not_suggest_missing_self(self):
         """A classmethod on a metaclass should not suggest instance self."""
-        msg = "AMeta.method_one_arg() takes 1 positional argument but 2 were given"
+        msg = "AMeta.classmethod_one_arg() takes 1 positional argument but 2 were given"
         with self.assert_type_error_and_msg_equals(msg):
-            AClassWithMetaclass.method_one_arg("standard")
+            AClassWithMetaclass.classmethod_one_arg("standard")
 
     def test_metaclass_staticmethod_does_not_suggest_missing_self(self):
         """A staticmethod on a metaclass should not suggest instance self."""
