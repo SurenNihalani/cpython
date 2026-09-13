@@ -947,17 +947,17 @@ class TestPEP590(unittest.TestCase):
         self.assertEqual(kwargs_captured, [{"baz": "bar"}])
 
 class A:
-    def method_two_args(self, sound):
+    def method_two_args(arg1=None, arg2=None):
         pass
 
-    def method_one_arg(sound):
+    def method_one_arg(arg1):
         pass
 
     def method_zero_arg():
         pass
 
     @classmethod
-    def classmethod_one_arg(dog_type):
+    def classmethod_one_arg(arg1):
         pass
 
     @staticmethod
@@ -965,27 +965,28 @@ class A:
         pass
 
     @staticmethod
-    def static_positional_only_one_arg(toy, /):
+    def static_positional_only_one_arg(arg1, /):
         pass
 
     @staticmethod
-    def static_one_arg(times):
+    def static_one_arg(arg1):
         pass
 
 
 class AMeta(type):
-    def method_one_arg(dog_type):
+
+    def method_one_arg(arg1):
         pass
 
-    def method_two_arg(cls, scent):
+    def method_two_arg(arg1, arg2):
         pass
 
     @classmethod
-    def classmethod_one_arg(dog_type):
+    def classmethod_one_arg(arg1):
         pass
 
     @staticmethod
-    def static_one_arg(label):
+    def static_one_arg(arg1):
         pass
 
 class AClassWithMetaclass(metaclass=AMeta):
@@ -1001,7 +1002,7 @@ class TestIncorrectNumberOfPositionalArgs(unittest.TestCase):
 
     def test_too_many_positional_with_self_does_not_suggest_missing_self(self):
         """A regular method with self should keep the normal too-many-args error."""
-        msg = "takes 2 positional arguments but 3 were given"
+        msg = ".method_two_args() takes from 0 to 2 positional arguments but 3 were given. Did you forget the 'self' parameter in the function definition?"
         with self.assert_type_error_and_msg_equals(msg):
             A().method_two_args("woof", "loud")
 
@@ -1009,18 +1010,18 @@ class TestIncorrectNumberOfPositionalArgs(unittest.TestCase):
         """A bound instance method missing self should get the targeted hint."""
         msg = "takes 1 positional argument but 2 were given. Did you forget the 'self' parameter in the function definition?"
         with self.assert_type_error_and_msg_equals(msg):
-            A().method_one_arg_no_self("woof")
+            A().method_one_arg("woof")
 
     def test_too_many_positional_but_missing_self_no_args(self):
         """A zero-argument method called through an instance should get the hint."""
         msg = "takes 0 positional arguments but 1 was given. Did you forget the 'self' parameter in the function definition?"
         with self.assert_type_error_and_msg_equals(msg):
-            A().instance_zero_arg_no_self()
+            A().method_zero_arg()
 
     def test_missing_arguments(self):
-        msg = "missing 1 required positional argument: 'pitch'"
+        msg = ".method_one_arg() takes 1 positional argument but 2 were given. Did you forget the 'self' parameter in the function definition?"
         with self.assert_type_error_and_msg_equals(msg):
-            A().method_two_args("quiet")
+            A().method_one_arg("quiet")
 
     def test_too_many_positional(self):
         msg = "takes 0 positional arguments but 1 was given"
@@ -1028,77 +1029,77 @@ class TestIncorrectNumberOfPositionalArgs(unittest.TestCase):
             A.static_no_args("oops it's an arg")
 
     def test_positional_only_passed_as_keyword(self):
-        msg = "Dog.fetch() got some positional-only arguments passed as keyword arguments: 'toy'"
+        msg = ".static_positional_only_one_arg() got some positional-only arguments passed as keyword arguments: 'arg1'"
         with self.assert_type_error_and_msg_equals(msg):
-            A.static_positional_only_one_arg(toy="ball")
+            A.static_positional_only_one_arg(arg1="ball")
 
     def test_unexpected_keyword(self):
-        msg = "Dog.bark() got an unexpected keyword argument 'bad'"
+        msg = "method_two_args() got an unexpected keyword argument 'bad'"
         with self.assert_type_error_and_msg_equals(msg):
             A().method_two_args(bad="x")
 
     def test_multiple_values(self):
-        msg = "Dog.bark() got multiple values for argument 'volume'"
+        msg = ".method_two_args() got multiple values for argument 'arg1'"
         with self.assert_type_error_and_msg_equals(msg):
-            A().method_two_args("quiet", "low", volume="oops")
+            A().method_two_args("quiet", "low", arg1="oops")
 
     def test_self_in_wrong_position_keeps_missing_argument_error(self):
         """A parameter named self in the wrong position is a missing-arg error."""
-        msg = "Dog.bark_with_self_arg() missing 1 required positional argument: 'self'"
+        msg = ".method_zero_arg() takes 0 positional arguments but 1 was given. Did you forget the 'self' parameter in the function definition?"
         with self.assert_type_error_and_msg_equals(msg):
-            A().bark_with_self_arg()
+            A().method_zero_arg()
 
     def test_unbound_method_with_self_keeps_missing_argument_error(self):
         """Calling an unbound method without self should keep the missing-arg error."""
-        msg = "Dog.sit() missing 1 required positional argument: 'self'"
+        msg = ".method_one_arg() missing 1 required positional argument: 'arg1'"
         with self.assert_type_error_and_msg_equals(msg):
-            A.sit()
+            A.method_one_arg()
 
     def test_classmethod_missing_cls_does_not_suggest_missing_self(self):
         """A classmethod missing cls conceptually should not suggest self."""
-        msg = "A.register_breed() takes 1 positional argument but 2 were given"
+        msg = ".classmethod_one_arg() takes 1 positional argument but 2 were given"
         with self.assert_type_error_and_msg_equals(msg):
             A.classmethod_one_arg("poodle")
 
     def test_classmethod_missing_cls_via_instance_does_not_suggest_missing_self(self):
         """A classmethod called through an instance should not suggest self."""
-        msg = "Dog.register_breed() takes 1 positional argument but 2 were given"
+        msg = ".classmethod_one_arg() takes 1 positional argument but 2 were given"
         with self.assert_type_error_and_msg_equals(msg):
             A().classmethod_one_arg("poodle")
 
     def test_staticmethod_too_many_args_does_not_suggest_missing_self(self):
         """A staticmethod with too many arguments should not suggest self."""
-        msg = "Dog.wag_tail() takes 1 positional argument but 2 were given"
+        msg = ".static_one_arg() takes 1 positional argument but 2 were given"
         with self.assert_type_error_and_msg_equals(msg):
             A.static_one_arg(1, 2)
 
     def test_staticmethod_too_many_args_via_instance_does_not_suggest_missing_self(self):
         """A staticmethod called through an instance should not suggest self."""
-        msg = "Dog.wag_tail() takes 1 positional argument but 2 were given"
+        msg = ".static_one_arg() takes 1 positional argument but 2 were given"
         with self.assert_type_error_and_msg_equals(msg):
             A().static_one_arg(1, 2)
 
     def test_metaclass_missing_receiver_does_not_suggest_missing_self(self):
         """A metaclass receiver error should not suggest an instance self."""
-        msg = "AnimalMeta.register_pack() takes 1 positional argument but 2 were given"
+        msg = "AMeta.method_one_arg() takes 1 positional argument but 2 were given"
         with self.assert_type_error_and_msg_equals(msg):
             AClassWithMetaclass.method_one_arg("standard")
 
     def test_metaclass_method_too_many_args_does_not_suggest_missing_self(self):
         """A metaclass method with too many arguments should not suggest self."""
-        msg = "AnimalMeta.track_pack() takes 2 positional arguments but 3 were given"
+        msg = "AMeta.method_two_arg() takes 2 positional arguments but 3 were given"
         with self.assert_type_error_and_msg_equals(msg):
             AClassWithMetaclass.method_two_arg("trail", "river")
 
     def test_metaclass_classmethod_does_not_suggest_missing_self(self):
         """A classmethod on a metaclass should not suggest instance self."""
-        msg = "AnimalMeta.classify_pack() takes 1 positional argument but 2 were given"
+        msg = "AMeta.method_one_arg() takes 1 positional argument but 2 were given"
         with self.assert_type_error_and_msg_equals(msg):
-            AClassWithMetaclass.classify_pack("standard")
+            AClassWithMetaclass.method_one_arg("standard")
 
     def test_metaclass_staticmethod_does_not_suggest_missing_self(self):
         """A staticmethod on a metaclass should not suggest instance self."""
-        msg = "AnimalMeta.tag_pack() takes 1 positional argument but 2 were given"
+        msg = "AMeta.static_one_arg() takes 1 positional argument but 2 were given"
         with self.assert_type_error_and_msg_equals(msg):
             AClassWithMetaclass.static_one_arg("show", "working")
 
